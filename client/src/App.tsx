@@ -31,7 +31,7 @@ function ScrollToTop() {
 
 export default function App() {
   const { theme, largeText, initialize } = useUiStore()
-  const { checkAuth } = useAuthStore()
+  const { checkAuth, isAuthenticated } = useAuthStore()
 
   useEffect(() => {
     initialize()
@@ -71,7 +71,7 @@ export default function App() {
             </Routes>
           </AnimatePresence>
         </main>
-        <BottomNav />
+        {isAuthenticated && <BottomNav />}
         <ToastContainer />
       </div>
     </ErrorBoundary>

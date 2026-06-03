@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
@@ -21,11 +21,17 @@ const genderOptions = [
 export default function Register() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { register } = useAuthStore()
+  const { register, isAuthenticated } = useAuthStore()
   const { addToast } = useUiStore()
   const [role, setRole] = useState<Role>('patient')
   const [step, setStep] = useState<Step>('form')
   const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard')
+    }
+  }, [isAuthenticated, navigate])
 
   const [form, setForm] = useState({
     name: '', age: '', gender: '', village: '', district: '', state: '', phone: '', password: '', workerId: '',
