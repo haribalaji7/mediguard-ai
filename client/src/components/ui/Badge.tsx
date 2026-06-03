@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { classNames, getRiskBgColor } from '../../lib/utils'
+import { classNames } from '../../lib/utils'
 
 interface BadgeProps {
   children: React.ReactNode

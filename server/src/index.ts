@@ -6,6 +6,7 @@ import cors from 'cors'
 import helmet from 'helmet'
 import cookieParser from 'cookie-parser'
 import morgan from 'morgan'
+import { validateEnv } from './config/env'
 import { connectDB } from './config/db'
 import { generalLimiter } from './middleware/rateLimiter'
 import { sanitizeInput } from './middleware/sanitizer'
@@ -19,11 +20,14 @@ import educationRoutes from './routes/education'
 import communityRoutes from './routes/community'
 import workerRoutes from './routes/worker'
 
+// Validate all environment variables at startup (fails fast with clear errors)
+const env = validateEnv()
+
 const app = express()
-const PORT = process.env.PORT || 5000
+const PORT = env.PORT
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }))
-app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173', credentials: true }))
+app.use(cors({ origin: env.CLIENT_URL, credentials: true }))
 app.use(cookieParser())
 app.use(express.json({ limit: '10mb' }))
 app.use(morgan('dev'))

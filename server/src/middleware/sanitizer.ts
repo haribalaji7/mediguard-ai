@@ -18,7 +18,22 @@ export function sanitizeInput(req: Request, _res: Response, next: NextFunction):
     return value
   }
 
-  req.body = sanitize(req.body) as Record<string, unknown>
-  req.query = sanitize(req.query) as Record<string, string>
+  // Sanitize req.body
+  if (req.body && typeof req.body === 'object') {
+    req.body = sanitize(req.body) as Record<string, unknown>
+  }
+  
+  // Sanitize req.query values without reassigning the whole object
+  if (req.query && typeof req.query === 'object') {
+    const sanitizedQuery: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(req.query)) {
+      sanitizedQuery[key] = sanitize(value)
+    }
+    // We can't reassign req.query due to Express typing, so we modify in place
+    // Clear and repopulate to avoid type issues
+    Object.keys(req.query).forEach(key => delete (req.query as any)[key])
+    Object.assign(req.query, sanitizedQuery)
+  }
+  
   next()
 }

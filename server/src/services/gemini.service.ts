@@ -37,16 +37,16 @@ function getFallbackAnalysis(symptoms: { bodyArea: string; symptomType: string; 
 }
 
 export async function analyzeSymptoms(symptoms: { bodyArea: string; symptomType: string; duration: string; severity: number; description: string }) {
-  const apiKey = process.env.GEMINI_API_KEY
+    const apiKey = process.env.GEMINI_API_KEY
 
-  if (!apiKey) {
-    console.log('GEMINI_API_KEY not set, using fallback analysis')
-    return getFallbackAnalysis(symptoms)
-  }
+    if (!apiKey) {
+        console.log('GEMINI_API_KEY not set, using fallback analysis')
+        return getFallbackAnalysis(symptoms)
+    }
 
-  try {
-    const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' })
+    try {
+        const genAI = new GoogleGenerativeAI(apiKey)
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' })
 
     const prompt = `${SYSTEM_PROMPT}\n\nSymptoms: ${JSON.stringify(symptoms)}`
     const result = await model.generateContent(prompt)
@@ -60,18 +60,18 @@ export async function analyzeSymptoms(symptoms: { bodyArea: string; symptomType:
 }
 
 export async function assessRisk(patientData: Record<string, unknown>) {
-  const apiKey = process.env.GEMINI_API_KEY
+    const apiKey = process.env.GEMINI_API_KEY
 
-  if (!apiKey) {
-    const yesCount = Object.values(patientData).filter((v) => v === 'Yes' || v === 'yes').length
-    const total = Object.keys(patientData).length || 1
-    const score = Math.round((yesCount / total) * 100)
-    return { riskScore: score, riskLevel: score > 60 ? 'high' : score > 30 ? 'medium' : 'low' }
-  }
+    if (!apiKey) {
+        const yesCount = Object.values(patientData).filter((v) => v === 'Yes' || v === 'yes').length
+        const total = Object.keys(patientData).length || 1
+        const score = Math.round((yesCount / total) * 100)
+        return { riskScore: score, riskLevel: score > 60 ? 'high' : score > 30 ? 'medium' : 'low' }
+    }
 
-  try {
-    const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' })
+    try {
+        const genAI = new GoogleGenerativeAI(apiKey)
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' })
 
     const prompt = `Analyze this health screening data and return a JSON with riskScore (0-100) and riskLevel (low/medium/high/emergency): ${JSON.stringify(patientData)}`
     const result = await model.generateContent(prompt)
