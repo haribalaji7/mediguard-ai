@@ -1,0 +1,22 @@
+{
+  "name": "AAROGYAM - AI Rural Health Platform",
+  "short_name": "AAROGYAM",
+  "description": "Your AI Doctor for Rural India",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#00B894",
+  "background_color": "#F8FAF9",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
