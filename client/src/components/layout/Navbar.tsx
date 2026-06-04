@@ -35,12 +35,12 @@ export function Navbar() {
   const isActive = (href: string) => location.pathname === href
 
   return (
-    <nav className="sticky top-0 z-40 bg-bg-base/80 backdrop-blur-lg border-b border-border">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center gap-2.5 group" aria-label="MediGuard AI Home">
-            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
-              <Heart size={20} className="text-white" />
+    <nav className="sticky top-2 sm:top-4 z-50 mx-2 sm:mx-6 md:mx-auto max-w-7xl bg-bg-card/70 backdrop-blur-2xl border border-white/20 shadow-[0_10px_40px_rgba(0,0,0,0.1)] rounded-3xl transition-all duration-300">
+      <div className="px-4 sm:px-6">
+        <div className="flex items-center justify-between h-16 sm:h-20">
+          <Link to="/" className="flex items-center gap-3 group" aria-label="MediGuard AI Home">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-glow group-hover:shadow-[0_0_30px_rgba(0,200,150,0.5)] transition-all">
+              <Heart size={20} className="text-white fill-white group-hover:scale-110 transition-transform" />
             </div>
             <span className="font-display text-xl font-bold text-text-primary group-hover:text-primary transition-colors">
               MediGuard AI

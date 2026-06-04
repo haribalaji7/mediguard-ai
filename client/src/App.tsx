@@ -92,10 +92,18 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-bg-base text-text-primary transition-colors duration-300">
-        <ScrollToTop />
-        <Navbar />
-        <main className="min-h-[calc(100vh-4rem)]">
+      <div className="min-h-screen bg-bg-base text-text-primary transition-colors duration-500 overflow-x-hidden relative">
+        {/* Global Ambient Background */}
+        <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[100px] animate-blob" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-accent/5 rounded-full blur-[120px] animate-blob animation-delay-4000" />
+          <div className="absolute top-[20%] right-[20%] w-[30%] h-[30%] bg-accent-gold/5 rounded-full blur-[80px] animate-blob animation-delay-2000" />
+        </div>
+        
+        <div className="relative z-10 flex flex-col min-h-screen">
+          <ScrollToTop />
+          <Navbar />
+          <main className="flex-1 pb-20 md:pb-8">
           <AnimatePresence mode="wait">
             <Routes>
               <Route path="/" element={<Landing />} />
@@ -119,7 +127,9 @@ export default function App() {
           </AnimatePresence>
         </main>
         {isAuthenticated && <BottomNav />}
+        <Footer />
         <ToastContainer />
+        </div>
       </div>
     </ErrorBoundary>
   )

@@ -27,9 +27,10 @@ export function BottomNav() {
   const items = user?.role === 'worker' || user?.role === 'admin' ? workerItems : patientItems
 
   return (
-    <nav className="md:hidden fixed bottom-4 left-4 right-4 z-40 bg-bg-card/70 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] overflow-hidden safe-area-bottom">
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none" />
-      <div className="flex items-center justify-around h-16 px-2 relative z-10">
+    <nav className="md:hidden fixed bottom-6 left-6 right-6 z-50 bg-bg-card/60 backdrop-blur-3xl border border-white/20 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.2)] overflow-hidden safe-area-bottom pb-env(safe-area-inset-bottom)">
+      <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-accent/5 to-primary/10 pointer-events-none opacity-50" />
+      <div className="absolute top-0 left-1/4 right-1/4 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent" />
+      <div className="flex items-center justify-around h-20 px-4 relative z-10">
         {items.map((item) => {
           const isActive = location.pathname === item.href
           return (
@@ -43,10 +44,10 @@ export function BottomNav() {
               aria-label={t(item.label)}
             >
               {isActive && (
-                <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-8 h-1 bg-primary rounded-full shadow-[0_0_8px_rgba(0,184,148,0.8)]" />
+                <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-12 h-1 bg-gradient-to-r from-primary to-accent rounded-full shadow-[0_0_12px_rgba(0,200,150,0.8)]" />
               )}
               {isActive && (
-                <div className="absolute inset-0 bg-primary/10 rounded-xl blur-sm -z-10" />
+                <div className="absolute inset-0 bg-primary/15 rounded-2xl blur-md -z-10 animate-pulse-slow" />
               )}
               <item.icon size={22} className={classNames('transition-transform duration-300', isActive ? 'fill-primary/20 drop-shadow-[0_0_8px_rgba(0,184,148,0.5)]' : '')} />
               <span className={classNames("text-[10px] font-bold leading-tight transition-opacity", isActive ? 'opacity-100' : 'opacity-70')}>{t(item.label)}</span>
