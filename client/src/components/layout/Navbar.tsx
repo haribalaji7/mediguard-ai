@@ -11,11 +11,17 @@ import { classNames } from '../../lib/utils'
 
 const navLinks = [
   { href: '/', label: 'nav.home', public: true },
-  { href: '/dashboard', label: 'nav.dashboard', auth: true },
-  { href: '/symptom-checker', label: 'nav.symptomChecker', auth: true },
-  { href: '/screening', label: 'nav.screening', auth: true },
-  { href: '/learn', label: 'nav.learn', public: true },
-  { href: '/community', label: 'nav.community', public: true },
+  { href: '/dashboard', label: 'nav.dashboard', auth: true, roles: ['patient'] },
+  { href: '/symptom-checker', label: 'nav.symptomChecker', auth: true, roles: ['patient'] },
+  { href: '/screening', label: 'nav.screening', auth: true, roles: ['patient'] },
+  { href: '/learn', label: 'nav.learn', auth: true, roles: ['patient'] },
+  { href: '/community', label: 'nav.community', auth: true, roles: ['patient'] },
+  
+  // Worker Specific Routes
+  { href: '/worker', label: 'Command Center', auth: true, roles: ['worker', 'admin'] },
+  { href: '/worker/field-ops', label: 'Field Ops', auth: true, roles: ['worker', 'admin'] },
+  { href: '/worker/inventory', label: 'Inventory', auth: true, roles: ['worker', 'admin'] },
+  { href: '/worker/training', label: 'Training', auth: true, roles: ['worker', 'admin'] },
 ]
 
 export function Navbar() {
@@ -44,6 +50,7 @@ export function Navbar() {
           <div className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => {
               if (link.auth && !isAuthenticated) return null
+              if ((link as any).roles && user && !(link as any).roles.includes(user.role)) return null
               return (
                 <Link
                   key={link.href}
@@ -52,7 +59,7 @@ export function Navbar() {
                     'px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
                     isActive(link.href)
                       ? 'bg-primary/10 text-primary'
-                      : 'text-text-secondary hover:text-text-primary hover:bg-gray-50 dark:hover:bg-white/5',
+                      : 'text-text-secondary hover:text-text-primary hover:bg-border/20',
                   )}
                 >
                   {t(link.label)}
@@ -73,7 +80,7 @@ export function Navbar() {
 
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg text-text-secondary hover:text-primary hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+              className="p-2 rounded-lg text-text-secondary hover:text-primary hover:bg-border/30 transition-colors"
               aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
@@ -85,7 +92,7 @@ export function Navbar() {
               <div className="hidden md:flex items-center gap-3 ml-2">
                 <Link
                   to={user?.role === 'worker' ? '/worker' : user?.role === 'admin' ? '/admin' : '/dashboard'}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-border/30 transition-colors"
                 >
                   <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
                     {user?.role === 'worker' ? <Stethoscope size={16} className="text-primary" /> : <User size={16} className="text-primary" />}
@@ -109,7 +116,7 @@ export function Navbar() {
 
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="md:hidden p-2 rounded-lg text-text-secondary hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+              className="md:hidden p-2 rounded-lg text-text-secondary hover:bg-border/30 transition-colors"
               aria-label="Toggle menu"
             >
               {mobileOpen ? <X size={22} /> : <Menu size={22} />}
@@ -129,6 +136,7 @@ export function Navbar() {
             <div className="px-4 py-4 space-y-1">
               {navLinks.map((link) => {
                 if (link.auth && !isAuthenticated) return null
+                if ((link as any).roles && user && !(link as any).roles.includes(user.role)) return null
                 return (
                   <Link
                     key={link.href}
@@ -138,7 +146,7 @@ export function Navbar() {
                       'block px-4 py-3 rounded-xl text-sm font-medium transition-colors',
                       isActive(link.href)
                         ? 'bg-primary/10 text-primary'
-                        : 'text-text-secondary hover:bg-gray-50 dark:hover:bg-white/5',
+                        : 'text-text-secondary hover:bg-border/20',
                     )}
                   >
                     {t(link.label)}
@@ -159,7 +167,7 @@ export function Navbar() {
                   </div>
                   <button
                     onClick={() => { setMobileOpen(false); logout(); navigate('/') }}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-danger hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-danger hover:bg-danger/10 transition-colors"
                   >
                     <LogOut size={18} /> Logout
                   </button>

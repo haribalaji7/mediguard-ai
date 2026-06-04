@@ -53,7 +53,7 @@ export default function Records() {
         {showQR && (
           <Card className="max-w-xs mx-auto text-center mb-6">
             <h3 className="font-semibold text-text-primary mb-3">Your Health Card</h3>
-            <div className="w-48 h-48 mx-auto bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center">
+            <div className="w-48 h-48 mx-auto bg-border/30 rounded-xl flex items-center justify-center">
               <QrCode size={120} className="text-text-primary" />
             </div>
             <p className="text-xs text-text-secondary mt-3">Share this QR code with your doctor</p>

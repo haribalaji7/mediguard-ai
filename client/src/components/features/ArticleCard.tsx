@@ -28,13 +28,28 @@ export function ArticleCard({ article, onClick }: ArticleCardProps) {
       className="bg-bg-card rounded-2xl border border-border shadow-card overflow-hidden hover:shadow-card-hover transition-all group cursor-pointer"
       onClick={onClick}
     >
-      <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center relative">
-        {article.isVideo ? (
-          <div className="w-14 h-14 rounded-full bg-primary/90 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Play size={24} className="text-white ml-0.5" />
-          </div>
+      <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center relative overflow-hidden">
+        {article.imageUrl ? (
+          <img
+            src={article.imageUrl}
+            alt={article.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
         ) : (
-          <BookOpen size={40} className="text-primary/40" />
+          article.isVideo ? (
+            <div className="w-14 h-14 rounded-full bg-primary/90 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Play size={24} className="text-white ml-0.5" />
+            </div>
+          ) : (
+            <BookOpen size={40} className="text-primary/40" />
+          )
+        )}
+        {article.isVideo && article.imageUrl && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors">
+            <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
+              <Play size={20} className="text-white ml-0.5" />
+            </div>
+          </div>
         )}
         <button
           onClick={(e) => { e.stopPropagation(); toggleBookmark(article._id) }}

@@ -5,6 +5,7 @@ const api = axios.create({
   baseURL: '/api',
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
+  timeout: 800, // Fail fast if API server is not running or responding
 })
 
 api.interceptors.response.use(
@@ -15,7 +16,11 @@ api.interceptors.response.use(
         await api.post('/auth/refresh-token')
         return api(err.config)
       } catch {
-        window.location.href = '/login'
+        // Clear logged-in state to prevent loop in checkAuth on reload
+        localStorage.removeItem('aarogyam_logged_in')
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login'
+        }
       }
     }
     return Promise.reject(err)
@@ -80,10 +85,19 @@ export const workerApi = {
     handleApi<void>(() => api.post('/worker/bulk-entry', data)),
 }
 
+let isBackendDown = false
+
 export async function mockOrApi<T>(apiCall: () => Promise<T>, mockData: T, delay = 600): Promise<T> {
+  if (isBackendDown) {
+    return mockData
+  }
   try {
     return await apiCall()
-  } catch {
+  } catch (err: any) {
+    // If it's a network timeout, connection refusal, or server offline error, mark backend as down for fast-path mock execution
+    if (!err.response || err.code === 'ECONNABORTED' || err.message === 'Network Error') {
+      isBackendDown = true
+    }
     await new Promise((r) => setTimeout(r, delay))
     return mockData
   }

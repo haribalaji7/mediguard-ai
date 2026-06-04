@@ -1,11 +1,14 @@
-import { useRef, useEffect, useCallback } from 'react'
+import { useRef, useEffect, useCallback, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Bot, User, AlertTriangle, Home, Pill, Hospital, Loader2, Mic } from 'lucide-react'
+import { Bot, User, AlertTriangle, Home, Pill, Hospital, Loader2, Mic, FileDown } from 'lucide-react'
 import { useSymptomChecker } from '../../hooks/useSymptomChecker'
 import { classNames, getUrgencyColor } from '../../lib/utils'
 import { Button } from '../ui/Button'
 import { Badge } from '../ui/Badge'
 import type { SymptomAnalysis } from '../../types'
+import { useHealthStore } from '../../store/healthStore'
+import { useUiStore } from '../../store/uiStore'
+import { jsPDF } from 'jspdf'
 
 const bodyAreas = ['Head', 'Chest', 'Stomach', 'Limbs', 'Skin', 'Whole Body', 'Back', 'Throat']
 
@@ -105,37 +108,185 @@ export function SymptomChatUI() {
     setDescription, addUserMessage, advanceStep, analyze, reset,
   } = useSymptomChecker()
 
+  const { addScreening } = useHealthStore()
+  const { addToast } = useUiStore()
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const analysis = messages.find((m) => m.role === 'system')
   const parsedAnalysis: SymptomAnalysis | null = analysis ? JSON.parse(analysis.content) : null
+
+  // Local state for actions
+  const [hasSaved, setHasSaved] = useState(false)
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
+  const [isListening, setIsListening] = useState(false)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const voiceRef = useRef<unknown>(null)
+  const voiceRef = useRef<any>(null)
   const descriptionRef = useRef(description)
   descriptionRef.current = description
 
   const startVoice = useCallback(() => {
-    const SpeechRecognitionAPI = (window as unknown as Record<string, unknown>).SpeechRecognition || (window as unknown as Record<string, unknown>).webkitSpeechRecognition
-    if (!SpeechRecognitionAPI) return
-    const recognition = new (SpeechRecognitionAPI as new () => unknown)() as {
-      lang: string
-      interimResults: boolean
-      onresult: (event: { results: [{ transcript: string }[]] }) => void
-      start: () => void
+    const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SpeechRecognitionAPI) {
+      addToast('Speech recognition not supported on this browser.', 'error')
+      return
     }
-    recognition.lang = 'hi-IN'
+    
+    setIsListening(true)
+    const recognition = new SpeechRecognitionAPI()
+    recognition.lang = 'en-IN'
     recognition.interimResults = false
-    recognition.onresult = (event) => {
+    
+    recognition.onresult = (event: any) => {
       const text = event.results[0][0].transcript
       const current = descriptionRef.current
-      setDescription(current + ' ' + text)
+      setDescription(current ? `${current} ${text}` : text)
+      addToast('Voice captured successfully.', 'success')
+      setIsListening(false)
     }
+    
+    recognition.onerror = () => {
+      setIsListening(false)
+    }
+    
+    recognition.onend = () => {
+      setIsListening(false)
+    }
+    
     recognition.start()
     voiceRef.current = recognition
-  }, [setDescription])
+  }, [setDescription, addToast])
+
+  const handleSaveToRecords = () => {
+    if (!parsedAnalysis) return
+    
+    addScreening({
+      _id: `scr-${Date.now()}`,
+      patientId: 'user-001',
+      type: 'diabetes', // generic classification placeholder
+      answers: {},
+      riskScore: parsedAnalysis.urgency_level === 'EMERGENCY' || parsedAnalysis.urgency_level === 'HIGH' ? 75 : 20,
+      riskLevel: parsedAnalysis.urgency_level === 'EMERGENCY' || parsedAnalysis.urgency_level === 'HIGH' ? 'high' : 'low',
+      resultData: { message: parsedAnalysis.recommended_action },
+      createdAt: new Date().toISOString()
+    })
+    
+    setHasSaved(true)
+    addToast('Symptom analysis report saved to your profile history.', 'success')
+  }
+
+  const handleDownloadPdf = () => {
+    if (!parsedAnalysis) return
+    setIsGeneratingPdf(true)
+    
+    try {
+      const doc = new jsPDF()
+      const primaryColor = '#00B894'
+      const darkColor = '#2D3748'
+      
+      // Header Banner
+      doc.setFillColor(0, 184, 148)
+      doc.rect(0, 0, 210, 32, 'F')
+      
+      doc.setTextColor(255, 255, 255)
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(22)
+      doc.text('Aarogyam MediGuard AI', 15, 20)
+      
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'normal')
+      doc.text('RURAL RURAL HEALTH SUPPORT AND SCREENING REPORT', 115, 20)
+      
+      // Patient Summary Card
+      doc.setTextColor(darkColor)
+      doc.setFontSize(14)
+      doc.setFont('helvetica', 'bold')
+      doc.text('Clinical Assessment Summary', 15, 48)
+      
+      doc.setDrawColor(220, 220, 220)
+      doc.line(15, 52, 195, 52)
+      
+      // Core Diagnostics Table
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'bold')
+      doc.text('Urgency Level:', 15, 62)
+      doc.setFont('helvetica', 'normal')
+      doc.text(parsedAnalysis.urgency_level, 55, 62)
+      
+      doc.setFont('helvetica', 'bold')
+      doc.text('Recommended Action:', 15, 70)
+      doc.setFont('helvetica', 'normal')
+      const actionText = doc.splitTextToSize(parsedAnalysis.recommended_action, 135)
+      doc.text(actionText, 55, 70)
+      
+      let nextY = 70 + (actionText.length * 5) + 6
+      
+      // Possible Conditions Table
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(13)
+      doc.text('Possible Conditions Graphed', 15, nextY)
+      nextY += 4
+      doc.line(15, nextY, 195, nextY)
+      nextY += 8
+      
+      doc.setFontSize(11)
+      parsedAnalysis.possible_conditions.forEach((c) => {
+        doc.setFont('helvetica', 'bold')
+        doc.text(`${c.name} (${c.likelihood_percent}% Probability)`, 15, nextY)
+        nextY += 5
+        doc.setFont('helvetica', 'normal')
+        const descText = doc.splitTextToSize(c.description, 180)
+        doc.text(descText, 15, nextY)
+        nextY += (descText.length * 5) + 4
+      })
+      
+      // Home Care Interventions
+      if (parsedAnalysis.home_care_tips.length > 0) {
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(13)
+        doc.text('Recommended Care Interventions', 15, nextY)
+        nextY += 4
+        doc.line(15, nextY, 195, nextY)
+        nextY += 8
+        
+        doc.setFontSize(11)
+        doc.setFont('helvetica', 'normal')
+        parsedAnalysis.home_care_tips.forEach((tip) => {
+          doc.text(`- ${tip}`, 15, nextY)
+          nextY += 6
+        })
+        nextY += 4
+      }
+      
+      // Orange Callout Box
+      doc.setFillColor(254, 243, 199)
+      doc.rect(15, nextY, 180, 22, 'F')
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(10)
+      doc.setTextColor(217, 119, 6)
+      doc.text('WARNING / WHEN TO SEEK PROFESSIONAL CARE:', 18, nextY + 7)
+      
+      doc.setFont('helvetica', 'normal')
+      const warningText = doc.splitTextToSize(parsedAnalysis.when_to_seek_help, 174)
+      doc.text(warningText, 18, nextY + 14)
+      
+      doc.save('aarogyam-symptom-report.pdf')
+      addToast('Assessment report downloaded successfully as PDF.', 'success')
+    } catch (e) {
+      console.error(e)
+      addToast('Error generating PDF report.', 'error')
+    } finally {
+      setIsGeneratingPdf(false)
+    }
+  }
+
+  const handleReset = () => {
+    reset()
+    setHasSaved(false)
+  }
 
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)] max-w-2xl mx-auto">
@@ -247,7 +398,7 @@ export function SymptomChatUI() {
                 max="10"
                 value={severity}
                 onChange={(e) => setSeverity(Number(e.target.value))}
-                className="flex-1 h-2 rounded-full appearance-none bg-gray-200 dark:bg-gray-700 accent-primary"
+                className="flex-1 h-2 rounded-full appearance-none bg-border/40 accent-primary"
                 aria-label="Severity level"
               />
               <span className="text-sm text-text-secondary">Severe (10)</span>
@@ -260,6 +411,7 @@ export function SymptomChatUI() {
             <div className="flex gap-3">
               <textarea
                 placeholder="Describe your symptoms in your own words..."
+                value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className="flex-1 p-3 rounded-xl border border-border bg-bg-card text-text-primary text-sm resize-none h-20 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                 aria-label="Describe symptoms"
@@ -267,13 +419,36 @@ export function SymptomChatUI() {
               {typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) && (
                 <button
                   onClick={startVoice}
-                  className="self-end p-3 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                  disabled={isListening}
+                  className={classNames(
+                    "self-end p-3 rounded-xl transition-all",
+                    isListening
+                      ? "bg-primary text-white animate-pulse"
+                      : "bg-primary/10 text-primary hover:bg-primary/20"
+                  )}
                   aria-label="Voice input"
                 >
                   <Mic size={20} />
                 </button>
               )}
             </div>
+
+            {/* Soundwave animation */}
+            {isListening && (
+              <div className="flex items-center justify-center gap-1.5 py-2">
+                <span className="text-xs text-primary font-medium">Listening... Speak now</span>
+                <div className="flex gap-0.5 items-end h-4">
+                  {[...Array(5)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      animate={{ height: [4, 16, 4] }}
+                      transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }}
+                      className="w-1 bg-primary rounded-full"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
 
             <Button
               fullWidth
@@ -302,14 +477,22 @@ export function SymptomChatUI() {
           <div className="mt-4">
             <AnalysisResults analysis={parsedAnalysis} />
             <div className="flex gap-3 mt-4">
-              <Button variant="primary" onClick={() => {}}>
-                Save to Records
+              <Button 
+                variant="primary" 
+                onClick={handleSaveToRecords}
+                disabled={hasSaved}
+              >
+                {hasSaved ? 'Saved to Profile!' : 'Save to Records'}
               </Button>
-              <Button variant="secondary" onClick={() => {}}>
-                Share with Doctor
+              <Button 
+                variant="secondary" 
+                onClick={handleDownloadPdf}
+                isLoading={isGeneratingPdf}
+              >
+                <FileDown size={16} /> Download Report PDF
               </Button>
             </div>
-            <Button variant="ghost" onClick={reset} className="mt-2">
+            <Button variant="ghost" onClick={handleReset} className="mt-2">
               Start New Check
             </Button>
           </div>

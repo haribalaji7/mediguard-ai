@@ -81,6 +81,19 @@ export interface HealthCamp {
   services: string[]
   description: string
   organizer: string
+  lat?: number
+  lng?: number
+}
+
+export interface Hospital {
+  _id: string
+  name: string
+  location: string
+  lat: number
+  lng: number
+  type: string
+  phone?: string
+  availableServices?: string[]
 }
 
 export interface GovernmentScheme {
@@ -141,4 +154,32 @@ export interface ApiResponse<T> {
   data?: T
   error?: string
   message?: string
+}
+
+export interface OutbreakReport {
+  _id: string
+  condition: string
+  village: string
+  cases: number
+  date: string
+  reportedAt: string
+  status: 'pending' | 'reviewed' | 'resolved'
+}
+
+export interface DiscussionReply {
+  _id: string
+  authorName: string
+  village: string
+  content: string
+  createdAt: string
+}
+
+export interface DiscussionPost {
+  _id: string
+  authorName: string
+  village: string
+  content: string
+  likes: number
+  replies: DiscussionReply[]
+  createdAt: string
 }

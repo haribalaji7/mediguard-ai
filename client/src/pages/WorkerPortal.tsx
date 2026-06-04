@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Search, Users, Activity, BarChart3, AlertTriangle, Download, Plus, Trash2, Stethoscope } from 'lucide-react'
+import { Search, Users, Activity, BarChart3, AlertTriangle, AlertOctagon, Download, Plus, Trash2, Stethoscope, Phone, Mic } from 'lucide-react'
 import { PageTransition } from '../components/layout/PageTransition'
 import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
@@ -11,6 +11,7 @@ import { Modal } from '../components/ui/Modal'
 
 import { useDebounce } from '../hooks/useDebounce'
 import { useUiStore } from '../store/uiStore'
+import { useCommunityStore } from '../store/communityStore'
 import { classNames } from '../lib/utils'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 
@@ -42,11 +43,37 @@ const villageData = [
 
 export default function WorkerPortal() {
   const { addToast } = useUiStore()
-  const [activeTab, setActiveTab] = useState<'patients' | 'analytics' | 'bulk' | 'alerts'>('patients')
+  const { outbreaks, updateOutbreakStatus } = useCommunityStore()
+  const [activeTab, setActiveTab] = useState<'patients' | 'analytics' | 'bulk' | 'alerts' | 'outbreaks'>('patients')
   const [search, setSearch] = useState('')
   const [showBulk, setShowBulk] = useState(false)
   const [bulkRows, setBulkRows] = useState([{ name: '', age: '', village: '', symptoms: '' }])
   const debouncedSearch = useDebounce(search, 200)
+
+  // Call & Patient record states
+  const [selectedPatient, setSelectedPatient] = useState<typeof mockPatients[number] | null>(null)
+  const [activeCall, setActiveCall] = useState<{ name: string; phone: string } | null>(null)
+  const [callDuration, setCallDuration] = useState<number>(0)
+  const [isMuted, setIsMuted] = useState(false)
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout
+    if (activeCall) {
+      interval = setInterval(() => {
+        setCallDuration((prev) => prev + 1)
+      }, 1000)
+    } else {
+      setCallDuration(0)
+      setIsMuted(false)
+    }
+    return () => clearInterval(interval)
+  }, [activeCall])
+
+  const formatDuration = (sec: number) => {
+    const m = Math.floor(sec / 60)
+    const s = sec % 60
+    return `${m}:${s < 10 ? '0' : ''}${s}`
+  }
 
   const filteredPatients = mockPatients.filter((p) =>
     p.name.toLowerCase().includes(debouncedSearch.toLowerCase()) || p.village.toLowerCase().includes(debouncedSearch.toLowerCase()),
@@ -56,19 +83,42 @@ export default function WorkerPortal() {
     { id: 'patients', label: 'Patients', icon: Users },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'alerts', label: 'Alerts', icon: AlertTriangle },
+    { id: 'outbreaks', label: 'Outbreak Reports', icon: AlertOctagon },
   ]
 
   return (
     <PageTransition>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 pb-24 md:pb-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="font-display text-2xl sm:text-3xl font-bold text-text-primary">Healthcare Worker Portal</h1>
-            <p className="text-text-secondary text-sm mt-1">Manage patients and community health data</p>
+        <div className="relative mb-8 p-6 sm:p-8 rounded-[2rem] bg-gradient-to-br from-bg-card/80 to-bg-card/40 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,184,148,0.1)] overflow-hidden">
+          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3 pointer-events-none animate-pulse-slow" />
+          <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-accent/10 rounded-full blur-[60px] translate-y-1/3 -translate-x-1/3 pointer-events-none animate-pulse-slow" style={{ animationDelay: '2s' }} />
+          
+          <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="flex items-center gap-5">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-primary to-accent p-[2px] shadow-glow">
+                <div className="w-full h-full bg-bg-card/90 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                  <Stethoscope size={32} className="text-primary animate-pulse" />
+                </div>
+              </div>
+              <div>
+                <h1 className="font-display text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">
+                  Command Center
+                </h1>
+                <p className="text-text-secondary font-medium mt-1">
+                  Good Morning. You have <span className="text-danger font-bold">2 high-risk alerts</span> requiring attention today.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex flex-wrap gap-3">
+              <Button variant="secondary" className="bg-bg-base/50 backdrop-blur-md border-white/20 hover:border-primary/50" onClick={() => setActiveTab('alerts')}>
+                <AlertTriangle size={18} className="text-warning mr-2" /> View Alerts
+              </Button>
+              <Button size="lg" className="shadow-glow" onClick={() => setShowBulk(true)}>
+                <Plus size={18} /> Bulk Entry
+              </Button>
+            </div>
           </div>
-          <Button variant="primary" size="sm" onClick={() => setShowBulk(true)}>
-            <Plus size={16} /> Bulk Entry
-          </Button>
         </div>
 
         <div className="flex gap-2 mb-6 overflow-x-auto">
@@ -90,39 +140,85 @@ export default function WorkerPortal() {
         </div>
 
         {activeTab === 'patients' && (
-          <div>
-            <Input label="Search patients by name or village..." value={search} onChange={(e) => setSearch(e.target.value)} placeholder=" " className="mb-4" />
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-text-secondary border-b border-border">
-                    <th className="pb-3 font-semibold">Name</th>
-                    <th className="pb-3 font-semibold">Age</th>
-                    <th className="pb-3 font-semibold">Village</th>
-                    <th className="pb-3 font-semibold">Last Screening</th>
-                    <th className="pb-3 font-semibold">Risk</th>
-                    <th className="pb-3 font-semibold">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredPatients.length === 0 ? (
-                    <tr><td colSpan={6} className="text-center py-8 text-text-secondary">No patients found</td></tr>
-                  ) : (
-                    filteredPatients.map((p) => (
-                      <tr key={p.id} className="border-b border-border/50">
-                        <td className="py-3 text-text-primary font-medium">{p.name}</td>
-                        <td className="py-3 text-text-secondary">{p.age}</td>
-                        <td className="py-3 text-text-secondary">{p.village}</td>
-                        <td className="py-3 text-text-secondary">{p.lastScreening}</td>
-                        <td className="py-3"><Badge variant={p.riskLevel}>{p.riskLevel.toUpperCase()}</Badge></td>
-                        <td className="py-3"><Button variant="ghost" size="sm">View</Button></td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="relative mb-6">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" size={20} />
+              <Input 
+                label="Search Patients"
+                value={search} 
+                onChange={(e) => setSearch(e.target.value)} 
+                placeholder="Search patients by name or village..." 
+                className="pl-12 py-3 rounded-2xl bg-bg-card/50 backdrop-blur-md border-white/20 shadow-sm focus:bg-bg-card transition-colors"
+                autoComplete="off"
+              />
             </div>
-          </div>
+            
+            <div className="bg-bg-card/40 backdrop-blur-xl border border-white/10 rounded-[2rem] overflow-hidden shadow-card">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-bg-card/60 backdrop-blur-md border-b border-white/10">
+                    <tr className="text-left text-text-secondary">
+                      <th className="py-4 px-6 font-semibold uppercase tracking-wider text-xs">Patient Profile</th>
+                      <th className="py-4 px-6 font-semibold uppercase tracking-wider text-xs">Village</th>
+                      <th className="py-4 px-6 font-semibold uppercase tracking-wider text-xs">Last Screening</th>
+                      <th className="py-4 px-6 font-semibold uppercase tracking-wider text-xs">Risk Level</th>
+                      <th className="py-4 px-6 font-semibold uppercase tracking-wider text-xs text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredPatients.length === 0 ? (
+                      <tr><td colSpan={5} className="text-center py-12 text-text-secondary">No patients found</td></tr>
+                    ) : (
+                      filteredPatients.map((p, i) => (
+                        <motion.tr 
+                          key={p.id} 
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.05, type: 'spring', stiffness: 300, damping: 24 }}
+                          className="border-b border-border/30 hover:bg-white/5 transition-colors group"
+                        >
+                          <td className="py-4 px-6">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-md ${
+                                p.riskLevel === 'high' || p.riskLevel === 'emergency' ? 'bg-gradient-to-br from-danger to-warning' : 'bg-gradient-to-br from-primary to-accent'
+                              }`}>
+                                {p.name.charAt(0)}
+                              </div>
+                              <div>
+                                <p className="text-text-primary font-bold">{p.name}</p>
+                                <p className="text-xs text-text-secondary">Age: {p.age}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-4 px-6 text-text-secondary font-medium">{p.village}</td>
+                          <td className="py-4 px-6 text-text-secondary">{p.lastScreening}</td>
+                          <td className="py-4 px-6">
+                            <Badge variant={p.riskLevel} pulse={p.riskLevel === 'emergency' || p.riskLevel === 'high'}>
+                              {p.riskLevel.toUpperCase()}
+                            </Badge>
+                          </td>
+                          <td className="py-4 px-6 text-right">
+                            <Button 
+                              variant="secondary" 
+                              size="sm" 
+                              onClick={() => setSelectedPatient(p)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity bg-bg-card/80 backdrop-blur border-border"
+                            >
+                              View Profile
+                            </Button>
+                          </td>
+                        </motion.tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </motion.div>
         )}
 
         {activeTab === 'analytics' && (
@@ -193,7 +289,7 @@ export default function WorkerPortal() {
                         <td className="py-3 text-text-secondary">{v.count}</td>
                         <td className="py-3"><Badge variant={v.risk}>{v.risk.toUpperCase()}</Badge></td>
                         <td className="py-3">
-                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                          <div className="w-full bg-border/40 rounded-full h-2">
                             <div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, (v.count / 400) * 100)}%` }} />
                           </div>
                         </td>
@@ -224,8 +320,8 @@ export default function WorkerPortal() {
                     <Badge variant={p.riskLevel} pulse>{p.riskLevel.toUpperCase()} RISK</Badge>
                   </div>
                   <div className="flex gap-2 mt-3">
-                    <Button variant="primary" size="sm">Contact Patient</Button>
-                    <Button variant="ghost" size="sm">View Record</Button>
+                    <Button variant="primary" size="sm" onClick={() => setActiveCall({ name: p.name, phone: p.phone })}>Contact Patient</Button>
+                    <Button variant="ghost" size="sm" onClick={() => setSelectedPatient(p)}>View Record</Button>
                   </div>
                 </Card>
               ))
@@ -233,10 +329,92 @@ export default function WorkerPortal() {
           </div>
         )}
 
+        {activeTab === 'outbreaks' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="font-display text-lg font-bold text-text-primary">Community Outbreak Reports</h2>
+              <Badge variant="emergency">{outbreaks.filter(o => o.status === 'pending').length} Pending Review</Badge>
+            </div>
+            {outbreaks.length === 0 ? (
+              <Card className="text-center py-8">
+                <p className="text-text-secondary">No outbreak reports submitted yet.</p>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {outbreaks.map((ob) => (
+                  <Card
+                    key={ob._id}
+                    className="relative overflow-hidden border border-border hover:shadow-card transition-all"
+                  >
+                    <div className={`absolute top-0 left-0 right-0 h-1.5 ${
+                      ob.status === 'pending' ? 'bg-danger' : ob.status === 'reviewed' ? 'bg-warning' : 'bg-success'
+                    }`} />
+                    
+                    <div className="flex items-start justify-between gap-4 pt-2">
+                      <div>
+                        <h3 className="font-semibold text-base text-text-primary">{ob.condition}</h3>
+                        <p className="text-sm text-text-secondary mt-1">Village: <span className="font-medium text-text-primary">{ob.village}</span></p>
+                        <p className="text-xs text-text-secondary mt-0.5">Reported date: {ob.date}</p>
+                        <p className="text-[11px] text-text-secondary italic mt-1">Submitted: {new Date(ob.reportedAt).toLocaleString()}</p>
+                      </div>
+                      
+                      <div className="text-right flex flex-col items-end gap-2">
+                        <Badge variant={ob.cases >= 10 ? 'emergency' : 'medium'}>
+                          {ob.cases} Cases
+                        </Badge>
+                        <Badge variant={ob.status === 'pending' ? 'emergency' : ob.status === 'reviewed' ? 'medium' : 'success'}>
+                          {ob.status.toUpperCase()}
+                        </Badge>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-border/50">
+                      <span className="text-xs text-text-secondary">Mark as:</span>
+                      <div className="flex gap-1.5">
+                        {ob.status !== 'reviewed' && (
+                          <Button 
+                            variant="secondary" 
+                            size="sm" 
+                            className="text-xs py-1"
+                            onClick={() => {
+                              updateOutbreakStatus(ob._id, 'reviewed');
+                              addToast('Report status updated to Under Review.', 'info');
+                            }}
+                          >
+                            Reviewing
+                          </Button>
+                        )}
+                        {ob.status !== 'resolved' && (
+                          <Button 
+                            variant="primary" 
+                            size="sm" 
+                            className="text-xs py-1 bg-success hover:bg-success-dark text-white border-success"
+                            onClick={() => {
+                              updateOutbreakStatus(ob._id, 'resolved');
+                              addToast('Report status updated to Resolved.', 'success');
+                            }}
+                          >
+                            Resolve
+                          </Button>
+                        )}
+                        {ob.status === 'resolved' && (
+                          <span className="text-xs font-semibold text-success flex items-center gap-1">
+                            ✓ Action Completed
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         <Modal isOpen={showBulk} onClose={() => setShowBulk(false)} title="Bulk Screening Entry" size="xl">
           <div className="space-y-4">
             {bulkRows.map((row, i) => (
-              <div key={i} className="grid grid-cols-12 gap-2 items-end p-3 rounded-xl bg-gray-50 dark:bg-gray-800">
+              <div key={i} className="grid grid-cols-12 gap-2 items-end p-3 rounded-xl bg-border/20">
                 <div className="col-span-3">
                   <Input label="Name" value={row.name} onChange={(e) => { setBulkRows((prev) => prev.map((r, j) => j === i ? { ...r, name: e.target.value } : r)) }} placeholder=" " />
                 </div>
@@ -263,6 +441,122 @@ export default function WorkerPortal() {
               Submit All Entries
             </Button>
           </div>
+        </Modal>
+
+        {/* Call Modal */}
+        <Modal isOpen={activeCall !== null} onClose={() => { setActiveCall(null); setCallDuration(0); }} title="Outgoing Voice Call" size="sm">
+          {activeCall && (
+            <div className="flex flex-col items-center justify-center py-6 text-center space-y-6">
+              <div className="relative">
+                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center animate-ping absolute inset-0 opacity-40" />
+                <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center relative">
+                  <Phone size={32} className="text-primary" />
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-bold text-text-primary">{activeCall.name}</h3>
+                <p className="text-sm text-text-secondary mt-1">{activeCall.phone}</p>
+                <p className="text-xs text-primary font-semibold tracking-wide uppercase mt-2 animate-pulse">
+                  {callDuration === 0 ? 'Connecting via Telephony...' : `On Call: ${formatDuration(callDuration)}`}
+                </p>
+              </div>
+
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => setIsMuted(!isMuted)} 
+                  className={`p-3 rounded-full border transition-all ${
+                    isMuted ? 'bg-warning/20 border-warning text-warning' : 'bg-bg-card border-border text-text-secondary hover:border-primary/50'
+                  }`}
+                  title="Mute"
+                >
+                  <Mic size={18} />
+                </button>
+                <button 
+                  onClick={() => {
+                    const finalDuration = formatDuration(callDuration);
+                    setActiveCall(null);
+                    addToast(`Call ended. Duration: ${finalDuration}`, 'info');
+                    setCallDuration(0);
+                  }} 
+                  className="p-3 rounded-full bg-danger hover:bg-danger-dark text-white border-danger transition-all shadow-lg shadow-danger/20"
+                  title="Hang Up"
+                >
+                  <Phone size={18} className="rotate-135" />
+                </button>
+              </div>
+            </div>
+          )}
+        </Modal>
+
+        {/* Patient Health Record Modal */}
+        <Modal isOpen={selectedPatient !== null} onClose={() => setSelectedPatient(null)} title={`Patient Health Record - ${selectedPatient?.name || ''}`} size="lg">
+          {selectedPatient && (
+            <div className="space-y-4">
+              <div className="flex justify-between items-start border-b border-border/50 pb-3">
+                <div>
+                  <h3 className="text-lg font-bold text-text-primary">{selectedPatient.name}</h3>
+                  <p className="text-sm text-text-secondary">Age: {selectedPatient.age} · Village: {selectedPatient.village}</p>
+                  <p className="text-xs text-text-secondary mt-1">Phone: {selectedPatient.phone}</p>
+                </div>
+                <Badge variant={selectedPatient.riskLevel} pulse>
+                  {selectedPatient.riskLevel.toUpperCase()} RISK
+                </Badge>
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="font-semibold text-sm text-text-primary uppercase tracking-wider">Screening History</h4>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <Card className="p-3 bg-bg-card border border-border">
+                    <span className="text-xs text-text-secondary block">Blood Pressure</span>
+                    <span className="text-base font-bold text-text-primary">
+                      {selectedPatient.riskLevel === 'high' || selectedPatient.riskLevel === 'emergency' ? '145/95 mmHg' : '120/80 mmHg'}
+                    </span>
+                    <Badge variant={selectedPatient.riskLevel === 'high' || selectedPatient.riskLevel === 'emergency' ? 'high' : 'success'} size="sm" className="mt-1">
+                      {selectedPatient.riskLevel === 'high' || selectedPatient.riskLevel === 'emergency' ? 'Prehypertension' : 'Normal'}
+                    </Badge>
+                  </Card>
+
+                  <Card className="p-3 bg-bg-card border border-border">
+                    <span className="text-xs text-text-secondary block">Random Blood Sugar</span>
+                    <span className="text-base font-bold text-text-primary">
+                      {selectedPatient.riskLevel === 'emergency' ? '280 mg/dL' : selectedPatient.riskLevel === 'high' ? '180 mg/dL' : '110 mg/dL'}
+                    </span>
+                    <Badge variant={selectedPatient.riskLevel === 'emergency' ? 'emergency' : selectedPatient.riskLevel === 'high' ? 'high' : 'success'} size="sm" className="mt-1">
+                      {selectedPatient.riskLevel === 'emergency' ? 'Critical (Diabetic)' : selectedPatient.riskLevel === 'high' ? 'Elevated' : 'Normal'}
+                    </Badge>
+                  </Card>
+
+                  <Card className="p-3 bg-bg-card border border-border">
+                    <span className="text-xs text-text-secondary block">Hemoglobin (Hb)</span>
+                    <span className="text-base font-bold text-text-primary">
+                      {selectedPatient.riskLevel === 'high' ? '9.5 g/dL' : '13.2 g/dL'}
+                    </span>
+                    <Badge variant={selectedPatient.riskLevel === 'high' ? 'high' : 'success'} size="sm" className="mt-1">
+                      {selectedPatient.riskLevel === 'high' ? 'Mild Anemia' : 'Normal'}
+                    </Badge>
+                  </Card>
+
+                  <Card className="p-3 bg-bg-card border border-border">
+                    <span className="text-xs text-text-secondary block font-medium">Last Screening Date</span>
+                    <span className="text-sm font-semibold text-text-primary mt-1 block">
+                      {selectedPatient.lastScreening}
+                    </span>
+                  </Card>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-border/50 flex gap-2">
+                <Button variant="primary" fullWidth onClick={() => { setSelectedPatient(null); addToast('Report generated successfully!', 'success'); }}>
+                  Download PDF Report
+                </Button>
+                <Button variant="secondary" onClick={() => setSelectedPatient(null)}>
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
         </Modal>
       </div>
     </PageTransition>

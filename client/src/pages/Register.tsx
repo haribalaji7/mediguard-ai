@@ -119,7 +119,7 @@ export default function Register() {
                 <h1 className="font-display text-2xl font-bold text-text-primary">{t('auth.register')}</h1>
               </div>
 
-              <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 mb-6">
+              <div className="flex bg-border/30 rounded-xl p-1 mb-6">
                 <button onClick={() => setRole('patient')} className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all ${role === 'patient' ? 'bg-bg-card shadow-sm text-primary' : 'text-text-secondary'}`}>
                   {t('auth.asPatient')}
                 </button>

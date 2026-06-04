@@ -1,4 +1,4 @@
-import type { User, ScreeningResult, VitalRecord, Article, HealthCamp, GovernmentScheme, SuccessStory, Doctor, ChatMessage, SymptomAnalysis, AnalyticsData } from '../types'
+import type { User, ScreeningResult, VitalRecord, Article, HealthCamp, Hospital, GovernmentScheme, SuccessStory, Doctor, ChatMessage, SymptomAnalysis, AnalyticsData } from '../types'
 
 export const mockUser: User = {
   _id: 'user-001',
@@ -65,18 +65,24 @@ export const mockVitals: VitalRecord[] = [
 ]
 
 export const mockArticles: Article[] = [
-  { _id: 'art-001', title: 'Understanding Diabetes: Signs and Prevention', content: 'Diabetes is a condition where blood sugar levels rise...', category: 'chronic-disease', language: 'en', readTime: 5, imageUrl: '' },
-  { _id: 'art-002', title: 'Clean Water, Healthy Life', content: 'Access to clean drinking water is essential for preventing waterborne diseases...', category: 'hygiene', language: 'en', readTime: 3, imageUrl: '' },
-  { _id: 'art-003', title: 'Nutrition for Pregnant Women', content: 'Proper nutrition during pregnancy is crucial for both mother and baby...', category: 'mother-child', language: 'en', readTime: 7, imageUrl: '' },
-  { _id: 'art-004', title: 'Managing Stress in Daily Life', content: 'Stress can affect your physical and mental health. Here are simple ways to manage it...', category: 'mental-health', language: 'en', readTime: 4, imageUrl: '' },
-  { _id: 'art-005', title: 'आहार और पोषण के टिप्स', content: 'अच्छे स्वास्थ्य के लिए संतुलित आहार जरूरी है...', category: 'nutrition', language: 'hi', readTime: 6, imageUrl: '' },
-  { _id: 'art-006', title: 'TB: Symptoms and Treatment', content: 'Tuberculosis is a bacterial infection that mainly affects the lungs...', category: 'chronic-disease', language: 'en', readTime: 8, imageUrl: '' },
+  { _id: 'art-001', title: 'Understanding Diabetes: Signs and Prevention', content: 'Diabetes is a condition where blood sugar levels rise...', category: 'chronic-disease', language: 'en', readTime: 5, imageUrl: '/images/art-001.png' },
+  { _id: 'art-002', title: 'Clean Water, Healthy Life', content: 'Access to clean drinking water is essential for preventing waterborne diseases...', category: 'hygiene', language: 'en', readTime: 3, imageUrl: '/images/art-002.png' },
+  { _id: 'art-003', title: 'Nutrition for Pregnant Women', content: 'Proper nutrition during pregnancy is crucial for both mother and baby...', category: 'mother-child', language: 'en', readTime: 7, imageUrl: '/images/art-003.png' },
+  { _id: 'art-004', title: 'Managing Stress in Daily Life', content: 'Stress can affect your physical and mental health. Here are simple ways to manage it...', category: 'mental-health', language: 'en', readTime: 4, imageUrl: '/images/art-004.png' },
+  { _id: 'art-005', title: 'आहार और पोषण के टिप्स', content: 'अच्छे स्वास्थ्य के लिए संतुलित आहार जरूरी है...', category: 'nutrition', language: 'hi', readTime: 6, imageUrl: '/images/art-005.png' },
+  { _id: 'art-006', title: 'TB: Symptoms and Treatment', content: 'Tuberculosis is a bacterial infection that mainly affects the lungs...', category: 'chronic-disease', language: 'en', readTime: 8, imageUrl: '/images/art-006.png' },
 ]
 
 export const mockCamps: HealthCamp[] = [
-  { _id: 'camp-001', title: 'Free Health Checkup Camp', date: '2026-06-15T09:00:00Z', location: 'Ramnagar Community Center', services: ['Blood Pressure', 'Blood Sugar', 'BMI', 'Eye Checkup'], description: 'Free general health checkup for all villagers.', organizer: 'PHC Sitapur' },
-  { _id: 'camp-002', title: 'Mother & Child Health Camp', date: '2026-06-22T10:00:00Z', location: 'Ramnagar Primary School', services: ['Antenatal Checkup', 'Child Vaccination', 'Nutrition Advice'], description: 'Special camp for pregnant women and children under 5.', organizer: 'ICDS Department' },
-  { _id: 'camp-003', title: 'Eye & Dental Checkup Camp', date: '2026-07-05T09:00:00Z', location: 'Bhimavaram PHC', services: ['Eye Test', 'Dental Checkup', 'Glass Prescription'], description: 'Free eye and dental checkup camp.', organizer: 'District Health Department' },
+  { _id: 'camp-001', title: 'Free Health Checkup Camp', date: '2026-06-15T09:00:00Z', location: 'Ramnagar Community Center', services: ['Blood Pressure', 'Blood Sugar', 'BMI', 'Eye Checkup'], description: 'Free general health checkup for all villagers.', organizer: 'PHC Sitapur', lat: 27.6050, lng: 80.8050 },
+  { _id: 'camp-002', title: 'Mother & Child Health Camp', date: '2026-06-22T10:00:00Z', location: 'Ramnagar Primary School', services: ['Antenatal Checkup', 'Child Vaccination', 'Nutrition Advice'], description: 'Special camp for pregnant women and children under 5.', organizer: 'ICDS Department', lat: 27.6120, lng: 80.7980 },
+  { _id: 'camp-003', title: 'Eye & Dental Checkup Camp', date: '2026-07-05T09:00:00Z', location: 'Bhimavaram PHC', services: ['Eye Test', 'Dental Checkup', 'Glass Prescription'], description: 'Free eye and dental checkup camp.', organizer: 'District Health Department', lat: 16.5449, lng: 81.5222 },
+]
+
+export const mockHospitals: Hospital[] = [
+  { _id: 'hosp-001', name: 'Ramnagar Primary Health Center (PHC)', location: 'Ramnagar Main Road', type: 'Primary Health Center', lat: 27.6010, lng: 80.8020, phone: '05862-234567', availableServices: ['General OPD', 'Maternal Care', 'Vaccination', 'Basic Diagnostics'] },
+  { _id: 'hosp-002', name: 'Sitapur District Hospital', location: 'District Hospital Road, Sitapur', type: 'District Hospital', lat: 27.5700, lng: 80.6800, phone: '05862-220011', availableServices: ['Emergency Care', 'Inpatient Ward', 'Specialized Surgery', 'Advanced Diagnostics'] },
+  { _id: 'hosp-003', name: 'Bhimavaram General Hospital', location: 'Bhimavaram Bypass Road', type: 'General Hospital', lat: 16.5400, lng: 81.5200, phone: '08816-224466', availableServices: ['Emergency Care', 'OPD', 'Cardiology', 'Pediatrics'] },
 ]
 
 export const mockSchemes: GovernmentScheme[] = [

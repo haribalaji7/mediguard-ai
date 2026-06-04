@@ -8,7 +8,7 @@ interface SkeletonProps {
 }
 
 export function Skeleton({ variant = 'text', width, height, className }: SkeletonProps) {
-  const base = 'animate-pulse bg-gray-200 dark:bg-gray-700 rounded'
+  const base = 'animate-pulse bg-border/40 rounded'
 
   const variants = {
     text: 'h-4 w-full rounded',

@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { useUiStore } from './store/uiStore'
 import { useAuthStore } from './store/authStore'
@@ -21,12 +21,55 @@ import Consult from './pages/Consult'
 import Learn from './pages/Learn'
 import Community from './pages/Community'
 import WorkerPortal from './pages/WorkerPortal'
+import WorkerFieldOps from './pages/WorkerFieldOps'
+import WorkerInventory from './pages/WorkerInventory'
+import WorkerTraining from './pages/WorkerTraining'
 import Admin from './pages/Admin'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
   useEffect(() => { window.scrollTo(0, 0) }, [pathname])
   return null
+}
+
+function ProtectedRoute({ children }: { children: React.JSX.Element }) {
+  const { isAuthenticated, isLoading } = useAuthStore()
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />
+  }
+
+  return children
+}
+
+function RoleRoute({ children, roles }: { children: React.JSX.Element; roles: string[] }) {
+  const { user, isAuthenticated, isLoading } = useAuthStore()
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />
+  }
+
+  if (user && !roles.includes(user.role)) {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  return children
 }
 
 export default function App() {
@@ -58,15 +101,19 @@ export default function App() {
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/symptom-checker" element={<SymptomChecker />} />
-              <Route path="/screening" element={<Screening />} />
-              <Route path="/records" element={<Records />} />
-              <Route path="/consult" element={<Consult />} />
-              <Route path="/learn" element={<Learn />} />
-              <Route path="/community" element={<Community />} />
-              <Route path="/worker" element={<WorkerPortal />} />
-              <Route path="/admin" element={<Admin />} />
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/symptom-checker" element={<ProtectedRoute><SymptomChecker /></ProtectedRoute>} />
+              <Route path="/screening" element={<ProtectedRoute><Screening /></ProtectedRoute>} />
+              <Route path="/records" element={<ProtectedRoute><Records /></ProtectedRoute>} />
+              <Route path="/consult" element={<ProtectedRoute><Consult /></ProtectedRoute>} />
+              <Route path="/learn" element={<ProtectedRoute><Learn /></ProtectedRoute>} />
+              <Route path="/community" element={<ProtectedRoute><Community /></ProtectedRoute>} />
+              {/* Worker-Only Routes */}
+              <Route path="/worker" element={<RoleRoute roles={['worker', 'admin']}><WorkerPortal /></RoleRoute>} />
+              <Route path="/worker/field-ops" element={<RoleRoute roles={['worker', 'admin']}><WorkerFieldOps /></RoleRoute>} />
+              <Route path="/worker/inventory" element={<RoleRoute roles={['worker', 'admin']}><WorkerInventory /></RoleRoute>} />
+              <Route path="/worker/training" element={<RoleRoute roles={['worker', 'admin']}><WorkerTraining /></RoleRoute>} />
+              <Route path="/admin" element={<RoleRoute roles={['admin']}><Admin /></RoleRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AnimatePresence>

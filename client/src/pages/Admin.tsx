@@ -188,7 +188,7 @@ export default function Admin() {
                   { name: 'Database (MongoDB)', status: 'operational', latency: '32ms' },
                   { name: 'Storage Service', status: 'operational', latency: '18ms' },
                 ].map((svc) => (
-                  <div key={svc.name} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800">
+                  <div key={svc.name} className="flex items-center justify-between p-3 rounded-xl bg-border/20">
                     <div className="flex items-center gap-3">
                       <div className={classNames('w-2 h-2 rounded-full', svc.status === 'operational' ? 'bg-success' : 'bg-warning')} />
                       <span className="text-sm text-text-primary">{svc.name}</span>

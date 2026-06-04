@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom'
 import { Heart } from 'lucide-react'
+import { useAuthStore } from '../../store/authStore'
 
 export function Footer() {
+  const { user } = useAuthStore()
+
   return (
     <footer className="bg-bg-dark text-white/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
@@ -30,7 +33,9 @@ export function Footer() {
           <div>
             <h4 className="font-display font-semibold text-white mb-4">For Partners</h4>
             <div className="space-y-2.5">
-              <Link to="/worker" className="block text-sm text-white/60 hover:text-white transition-colors">Healthcare Workers</Link>
+              {(!user || user.role === 'worker' || user.role === 'admin') && (
+                <Link to="/worker" className="block text-sm text-white/60 hover:text-white transition-colors">Healthcare Workers</Link>
+              )}
               <Link to="/community" className="block text-sm text-white/60 hover:text-white transition-colors">NGO Partners</Link>
               <a href="#contact" className="block text-sm text-white/60 hover:text-white transition-colors">Contact Us</a>
             </div>

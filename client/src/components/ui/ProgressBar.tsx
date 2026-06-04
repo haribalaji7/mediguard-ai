@@ -23,7 +23,7 @@ export function ProgressBar({ progress, color, height = 8, showLabel, label, cla
         </div>
       )}
       <div
-        className="w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden"
+        className="w-full bg-border/40 rounded-full overflow-hidden"
         style={{ height }}
         role="progressbar"
         aria-valuenow={clamped}
